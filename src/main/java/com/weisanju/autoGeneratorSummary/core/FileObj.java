@@ -37,7 +37,7 @@ public abstract class FileObj {
                 }
                 filter.addAll(Arrays.asList(staticFilter));
                 children = Arrays.stream(list).filter(e -> {
-                    return (!e.isHidden()) && e.isDirectory() &&
+                    return (!e.isHidden()) && e.isDirectory() && (!e.getName().startsWith(".")) &&
                             filter.stream().noneMatch(x -> x.contains(e.getName()));
                 }).map(e -> {
                     FirstFileObj firstFileObj = new FirstFileObj(e);
