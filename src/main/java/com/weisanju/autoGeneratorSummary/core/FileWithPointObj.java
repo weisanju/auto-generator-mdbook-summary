@@ -3,8 +3,8 @@ package com.weisanju.autoGeneratorSummary.core;
 import java.io.File;
 
 public class FileWithPointObj extends FileObj{
-    public FileWithPointObj(File e) {
-        super(e);
+    public FileWithPointObj(File e,FileObj parent) {
+        super(e,parent);
     }
 
     @Override

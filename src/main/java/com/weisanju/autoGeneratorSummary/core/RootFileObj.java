@@ -7,8 +7,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class RootFileObj extends FileObj{
-    public RootFileObj(File realFile) {
-        super(realFile);
+    public RootFileObj(File realFile,FileObj parent) {
+        super(realFile,parent);
     }
 
     @Override

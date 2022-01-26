@@ -10,8 +10,8 @@ public class FirstFileObj extends FileObj implements DirFileObj{
     protected int order;
     protected String contentName;
 
-    public FirstFileObj(File realFile) {
-        super(realFile);
+    public FirstFileObj(File realFile,FileObj parent) {
+        super(realFile,parent);
 
 
         //解析其他

@@ -14,7 +14,7 @@ public class Main {
         }
 
         File root = new File(dirPath);
-        RootFileObj rootFileObj = new RootFileObj(root);
+        RootFileObj rootFileObj = new RootFileObj(root,null);
         if(targetPath == null){
             System.out.println(rootFileObj.write(0));
         }else{

@@ -13,58 +13,74 @@ public abstract class FileObj {
     protected File realFile;
     protected List<FileObj> children;
     protected FileObj parent;
-   private static String [] staticFilter = {".git","images"};
 
-    public FileObj(File realFile) {
+    private Set<String> filter;
+
+    private static String [] staticFilter = {".git","images"};
+
+    public FileObj(File realFile,FileObj parent) {
         this.realFile = realFile;
+        this.parent = parent;
+
+
         if(realFile.isDirectory()){
             File[] list = realFile.listFiles();
             if(list == null){
                 children = new ArrayList<>();
                 return;
             }
+            //查找过滤文件
+            buildFilter(realFile);
+
+            Set<String> filter = this.getFilter();
+
+
             if (this.getClass() == RootFileObj.class) {
-                //查找过滤文件
-                File ignore = new File(realFile, ".gitignore");
-                Set<String> filter = new HashSet<>();
-                try {
-                    filter.addAll(Files.lines(ignore.toPath()).
-                            collect(
-                                    Collectors.toSet()
-                            ));
-                } catch (IOException ioException) {
-                    ioException.printStackTrace();
-                }
-                filter.addAll(Arrays.asList(staticFilter));
+
                 children = Arrays.stream(list).filter(e -> {
                     return (!e.isHidden()) && e.isDirectory() && (!e.getName().startsWith(".")) &&
                             filter.stream().noneMatch(x -> x.contains(e.getName()));
                 }).map(e -> {
-                    FirstFileObj firstFileObj = new FirstFileObj(e);
-                    firstFileObj.setParent(this);
-                    return firstFileObj;
+                    return new FirstFileObj(e, this);
                 }).collect(Collectors.toList());
-                return;
+            }else{
+                children = Arrays.stream(list).filter(e->{
+                    return (!e.isHidden()) && filter.stream().noneMatch(x -> x.contains(e.getName()));
+                }).map(e->{
+                            if(e.isDirectory()){
+                                return new DirWithPointObj(e, this);
+                            }
+                    return new FileWithPointObj(e, this);
+                        }
+                ).collect(Collectors.toList());
             }
-            children = Arrays.stream(list).map(e->{
-
-                if(e.isDirectory()){
-                    DirWithPointObj dirWithPointObj = new DirWithPointObj(e);
-                    dirWithPointObj.setParent(this);
-                    return dirWithPointObj;
-                }
-                FileWithPointObj fileWithPointObj = new FileWithPointObj(e);
-                fileWithPointObj.setParent(this);
-                return fileWithPointObj;
-                }
-            ).collect(Collectors.toList());
         }else{
             children = new ArrayList<>();
         }
     }
 
+    private void buildFilter(File realFile) {
+        File ignore = new File(realFile, ".gitignore");
+        Set<String> filter = new HashSet<>();
+        if (ignore.exists()) {
+            try {
+                filter.addAll(Files.lines(ignore.toPath()).
+                        collect(
+                                Collectors.toSet()
+                        ));
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
+            }
+        }
+        filter.addAll(Arrays.asList(staticFilter));
+        if (this.parent!=null) {
+            filter.addAll(this.parent.getFilter());
+        }
+        this.filter = filter;
+    }
+
     public boolean isIndexMd(){
-        return getRealFile().getName().equalsIgnoreCase("README.md");
+        return "README.md".equalsIgnoreCase(getRealFile().getName());
     }
 
 
@@ -91,5 +107,9 @@ public abstract class FileObj {
     }
     public String getReadMeFile() {
         return getChildren().stream().filter(FileObj::isIndexMd).findFirst().map(FileObj::getRelativePath).orElse("");
+    }
+
+    public Set<String> getFilter() {
+        return this.filter;
     }
 }

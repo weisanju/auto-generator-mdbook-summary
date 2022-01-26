@@ -2,8 +2,8 @@ package com.weisanju.autoGeneratorSummary.core;
 
 import java.io.File;
 public class DirWithPointObj extends FileObj{
-    public DirWithPointObj(File e) {
-        super(e);
+    public DirWithPointObj(File e,FileObj parent) {
+        super(e,parent);
     }
 
     @Override
