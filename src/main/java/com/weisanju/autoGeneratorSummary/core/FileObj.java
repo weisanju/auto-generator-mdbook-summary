@@ -44,9 +44,67 @@ public abstract class FileObj {
                     return new FirstFileObj(e, this);
                 }).collect(Collectors.toList());
             }else{
+                //排序规则： 1. 目录优先 2.
                 children = Arrays.stream(list).filter(e->{
                     return (!e.isHidden()) && filter.stream().noneMatch(x -> x.contains(e.getName()));
+                }).sorted((left,right)->{
+                    boolean directory1 = left.isDirectory();
+                    boolean directory2 = right.isDirectory();
+                    if ((directory1 && !directory2)) {
+                        return -1;
+                    }
+                    if ((directory2 && !directory1)) {
+                        return 1;
+                    }
+                    String leftName = left.getName();
+                    String rightName = right.getName();
+                    int i1,i2;
+                    try {
+                        if (!directory1) {
+                            //去除文件后缀
+                            int f1 = leftName.lastIndexOf('.');
+                            int f2 = rightName.lastIndexOf('.');
+                            if(f1>0 && f2>0){
+                                i1 = leftName.substring(0,f1).indexOf('.');
+                                i2 = rightName.substring(0,f2).indexOf('.');
+                                if(i1>0 && i2>0){
+                                    int order1 = Integer.parseInt(leftName.substring(0, i1));
+                                    int order2 = Integer.parseInt(rightName.substring(0, i2));
+                                    return  order1-order2;
+                                }
+                                if(i1>0){
+                                    return 1;
+                                }
+                                if(i2>0){
+                                    return -1;
+                                }
+                            }
+                            if(f1>0){
+                                return 1;
+                            }
+                            if(f2>0){
+                                return -1;
+                            }
+                        }else{
+                            i1 = leftName.indexOf('.');
+                            i2 = rightName.indexOf('.');
+                            if(i1>0 && i2>0){
+                                int order1 = Integer.parseInt(leftName.substring(0, i1));
+                                int order2 = Integer.parseInt(rightName.substring(0, i2));
+                                return  order1-order2;
+                            }
+                            if(i1>0){
+                                return 1;
+                            }
+                            if(i2>0){
+                                return -1;
+                            }
+                        }
+                    } catch (NumberFormatException ignore) {
+                    }
+                    return leftName.compareTo(rightName);
                 }).map(e->{
+
                             if(e.isDirectory()){
                                 return new DirWithPointObj(e, this);
                             }
