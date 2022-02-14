@@ -89,9 +89,30 @@ public abstract class FileObj {
                             i1 = leftName.indexOf('.');
                             i2 = rightName.indexOf('.');
                             if(i1>0 && i2>0){
-                                int order1 = Integer.parseInt(leftName.substring(0, i1));
-                                int order2 = Integer.parseInt(rightName.substring(0, i2));
-                                return  order1-order2;
+                                int order1 = 0,order2 = 0;
+                                boolean order1Number = true;
+                                try {
+                                    order1 = Integer.parseInt(leftName.substring(0, i1));
+                                } catch (NumberFormatException ignore) {
+                                    order1Number = false;
+                                }
+
+                                boolean order2Number = true;
+                                try {
+                                    order2 = Integer.parseInt(leftName.substring(0, i2));
+                                } catch (NumberFormatException ignore) {
+                                    order2Number = false;
+                                }
+
+                                if(order1Number && order2Number && order1>=0 && order2>=0 && order1<100 && order2<100){
+                                    return  order1-order2;
+                                }
+                                if(order1Number && order1>=0 && order1<100){
+                                    return 1;
+                                }
+                                if(order2Number && order2>=0 && order2<100){
+                                    return -1;
+                                }
                             }
                             if(i1>0){
                                 return 1;
