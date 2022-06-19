@@ -22,19 +22,18 @@ public class FirstFileObj extends FileObj implements DirFileObj{
             contentName = name;
             return;
         }
-
-        int i2 = name.indexOf('_', i1 + 1);
+        int i2 = name.indexOf('.');
         if (i2 < 0) {
             groupName = name.substring(0, i1);
             contentName = name.substring(i1 + 1);
             return;
         }
-        groupName = name.substring(0, i1);
+        groupName = name.substring(i2+1,i1);
         try {
-            order = Integer.parseInt(name.substring(i1 + 1, i2));
+            order = Integer.parseInt(name.substring(0,i2));
         } catch (NumberFormatException ignored) {
         }
-        contentName = name.substring(i2 + 1);
+        contentName = name.substring(i1 + 1);
     }
 
     @Override
