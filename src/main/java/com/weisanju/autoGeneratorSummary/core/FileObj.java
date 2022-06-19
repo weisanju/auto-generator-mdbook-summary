@@ -16,16 +16,16 @@ public abstract class FileObj {
 
     private Set<String> filter;
 
-    private static String [] staticFilter = {".git","images"};
+    private static String[] staticFilter = {".git", "images"};
 
-    public FileObj(File realFile,FileObj parent) {
+    public FileObj(File realFile, FileObj parent) {
         this.realFile = realFile;
         this.parent = parent;
 
 
-        if(realFile.isDirectory()){
+        if (realFile.isDirectory()) {
             File[] list = realFile.listFiles();
-            if(list == null){
+            if (list == null) {
                 children = new ArrayList<>();
                 return;
             }
@@ -42,98 +42,61 @@ public abstract class FileObj {
                             filter.stream().noneMatch(x -> x.contains(e.getName()));
                 }).map(e -> {
                     return new FirstFileObj(e, this);
-                }).collect(Collectors.toList());
-            }else{
-                //排序规则： 1. 目录优先 2.
-                children = Arrays.stream(list).filter(e->{
+                }).sorted(Comparator.comparing(FirstFileObj::getOrder)).collect(Collectors.toList());
+            } else {
+                //排序规则：
+                //  1. 目录与文件：目录优先
+                //  2. 目录与目录：
+                // 都不存在排序：字母顺序排序
+                // 都存在排序： 排序号优先
+                // 不存在排序优先
+
+                children = Arrays.stream(list).filter(e -> {
                     return (!e.isHidden()) && filter.stream().noneMatch(x -> x.contains(e.getName()));
-                }).sorted((left,right)->{
+                }).sorted((left, right) -> {
                     boolean directory1 = left.isDirectory();
                     boolean directory2 = right.isDirectory();
+                    //目录优先
                     if ((directory1 && !directory2)) {
-                        return -1;
-                    }
-                    if ((directory2 && !directory1)) {
                         return 1;
                     }
+                    if ((directory2 && !directory1)) {
+                        return -1;
+                    }
+
                     String leftName = left.getName();
                     String rightName = right.getName();
-                    int i1,i2;
-                    try {
-                        if (!directory1) {
-                            //去除文件后缀
-                            int f1 = leftName.lastIndexOf('.');
-                            int f2 = rightName.lastIndexOf('.');
-                            if(f1>0 && f2>0){
-                                i1 = leftName.substring(0,f1).indexOf('.');
-                                i2 = rightName.substring(0,f2).indexOf('.');
-                                if(i1>0 && i2>0){
-                                    int order1 = Integer.parseInt(leftName.substring(0, i1));
-                                    int order2 = Integer.parseInt(rightName.substring(0, i2));
-                                    return  order1-order2;
-                                }
-                                if(i1>0){
-                                    return 1;
-                                }
-                                if(i2>0){
-                                    return -1;
-                                }
-                            }
-                            if(f1>0){
-                                return 1;
-                            }
-                            if(f2>0){
-                                return -1;
-                            }
-                        }else{
-                            i1 = leftName.indexOf('.');
-                            i2 = rightName.indexOf('.');
-                            if(i1>0 && i2>0){
-                                int order1 = 0,order2 = 0;
-                                boolean order1Number = true;
-                                try {
-                                    order1 = Integer.parseInt(leftName.substring(0, i1));
-                                } catch (NumberFormatException ignore) {
-                                    order1Number = false;
-                                }
-
-                                boolean order2Number = true;
-                                try {
-                                    order2 = Integer.parseInt(leftName.substring(0, i2));
-                                } catch (NumberFormatException ignore) {
-                                    order2Number = false;
-                                }
-
-                                if(order1Number && order2Number && order1>=0 && order2>=0 && order1<100 && order2<100){
-                                    return  order1-order2;
-                                }
-                                if(order1Number && order1>=0 && order1<100){
-                                    return 1;
-                                }
-                                if(order2Number && order2>=0 && order2<100){
-                                    return -1;
-                                }
-                            }
-                            if(i1>0){
-                                return 1;
-                            }
-                            if(i2>0){
-                                return -1;
-                            }
+                    if (!directory1) {
+                        int i = leftName.lastIndexOf('.');
+                        if (i > -1) {
+                            leftName = leftName.substring(0, i);
                         }
-                    } catch (NumberFormatException ignore) {
-                    }
-                    return leftName.compareTo(rightName);
-                }).map(e->{
+                        i = rightName.lastIndexOf('.');
+                        if (i > -1) {
+                            rightName = rightName.substring(0, i);
+                        }
 
-                            if(e.isDirectory()){
+                    }
+                    int i1 = leftName.indexOf('.');
+                    int i2 = rightName.indexOf('.');
+                    int ret = ((i1 == -1 || !isNumeric(leftName.substring(0, i1))) ? 1 : 0) +
+                            ((i2 == -1 || !isNumeric(rightName.substring(0, i2))) ? 2 : 0);
+                    if (ret > 0) {
+                        if (ret != 3) {
+                            return ret == 1 ? 1 : -1;
+                        }
+                        return leftName.compareTo(rightName);
+                    }
+                    return Integer.parseInt(leftName.substring(0, i1)) - Integer.parseInt(rightName.substring(0, i2));
+                }).map(e -> {
+                            if (e.isDirectory()) {
                                 return new DirWithPointObj(e, this);
                             }
-                    return new FileWithPointObj(e, this);
+                            return new FileWithPointObj(e, this);
                         }
                 ).collect(Collectors.toList());
             }
-        }else{
+        } else {
             children = new ArrayList<>();
         }
     }
@@ -152,13 +115,13 @@ public abstract class FileObj {
             }
         }
         filter.addAll(Arrays.asList(staticFilter));
-        if (this.parent!=null) {
+        if (this.parent != null) {
             filter.addAll(this.parent.getFilter());
         }
         this.filter = filter;
     }
 
-    public boolean isIndexMd(){
+    public boolean isIndexMd() {
         return "README.md".equalsIgnoreCase(getRealFile().getName());
     }
 
@@ -172,23 +135,32 @@ public abstract class FileObj {
     }
 
 
-
     public FileObj() {
     }
 
     abstract String write(int depth);
 
-    protected String getRelativePath(){
-        if(this.parent == null)
+    protected String getRelativePath() {
+        if (this.parent == null)
             return getRealFile().getName();
 
-        return this.parent.getRelativePath()+"/"+getRealFile().getName();
+        return this.parent.getRelativePath() + "/" + getRealFile().getName();
     }
+
     public String getReadMeFile() {
         return getChildren().stream().filter(FileObj::isIndexMd).findFirst().map(FileObj::getRelativePath).orElse("");
     }
 
     public Set<String> getFilter() {
         return this.filter;
+    }
+
+    public static boolean isNumeric(String str) {
+        for (int i = 0; i < str.length(); i++) {
+            if (!Character.isDigit(str.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
     }
 }
