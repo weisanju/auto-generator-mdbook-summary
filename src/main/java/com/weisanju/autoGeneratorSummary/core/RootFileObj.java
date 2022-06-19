@@ -1,9 +1,7 @@
 package com.weisanju.autoGeneratorSummary.core;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class RootFileObj extends FileObj{
@@ -13,7 +11,10 @@ public class RootFileObj extends FileObj{
 
     @Override
     String write(int depth) {
-        Map<String, List<FileObj>> collect = getChildren().stream().collect(Collectors.groupingBy(e -> ((FirstFileObj) (e)).getGroupName()));
+        Map<String, List<FileObj>> collect = getChildren().stream().collect(Collectors.groupingBy(
+                e ->((FirstFileObj) (e)).getGroupName(),LinkedHashMap::new,Collectors.toList())
+        );
+
         StringBuilder stringBuilder = new StringBuilder("[我的笔记库](README.md)").append(System.lineSeparator());
         collect.forEach((k,v)->{
             stringBuilder.append(writerH1Header(k));
