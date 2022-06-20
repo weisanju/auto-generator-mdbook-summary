@@ -5,7 +5,18 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class RootFileObj extends FileObj{
-    public RootFileObj(File realFile,FileObj parent) {
+
+    private String noteName;
+
+    public String getNoteName() {
+        return noteName;
+    }
+
+    public void setNoteName(String noteName) {
+        this.noteName = noteName;
+    }
+
+    public RootFileObj(File realFile, FileObj parent) {
         super(realFile,parent);
     }
 
@@ -15,7 +26,7 @@ public class RootFileObj extends FileObj{
                 e ->((FirstFileObj) (e)).getGroupName(),LinkedHashMap::new,Collectors.toList())
         );
 
-        StringBuilder stringBuilder = new StringBuilder("[我的笔记库](README.md)").append(System.lineSeparator());
+        StringBuilder stringBuilder = new StringBuilder("["+noteName+"](README.md)").append(System.lineSeparator());
         collect.forEach((k,v)->{
             stringBuilder.append(writerH1Header(k));
             for (FileObj fileObj : v) {
